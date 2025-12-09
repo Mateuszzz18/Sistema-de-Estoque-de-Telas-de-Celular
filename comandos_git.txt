@@ -1,0 +1,7 @@
+Comando Git
+
+1 - git add 'nome_arquivo' -> adiciona arquivo a ser commitado
+2 - git init . -> cria um repositorio git na pasta atual
+3 - git status -> mostra o status atual do trabalho (cada repositorio)
+4 - git commit -m "msg" -> faz commit do que estava "git add" para ser commitado
+5 - git log -> mostra todo os historicos de commit
