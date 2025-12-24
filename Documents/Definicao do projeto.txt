@@ -1,0 +1,45 @@
+📋 DOCUMENTO DE ESCOPO DO PROJETO (SGE - V1.0)
+1. A MISSÃO DO SOFTWARE O sistema deve substituir o caderno de anotações e a memória, garantindo que o técnico saiba exatamente o que tem na gaveta, quanto custou e qual o lucro estimado, evitando compras duplicadas ou falta de peças essenciais.
+
+2. O QUE ELE FAZ (Requisitos Funcionais)
+
+RF01 - Entrada de Estoque (Compra):
+O sistema deve permitir cadastrar uma peça nova informando detalhes técnicos precisos.
+Diferencial: Deve diferenciar peças idênticas de qualidades diferentes (ex: A51 OLED vs A51 Incell).
+
+RF02 - Consulta Rápida (O "Google" da Loja):
+O técnico deve poder digitar "A32" e ver todas as variantes disponíveis (cores e qualidades) e a quantidade atual.
+
+RF03 - Saída de Estoque (Venda/Uso):
+O sistema deve permitir dar baixa em uma peça específica, reduzindo a quantidade no banco de dados.
+
+RF04 - Controle Financeiro Básico:
+Cada peça deve ter atrelada a ela o Preço de Custo e o Preço de Venda Sugerido.
+
+RF05 - Alerta de Reposição: 
+O sistema deve ter uma função específica que lista apenas produtos com quantidade <= 1, facilitando a montagem da lista de compras da semana.
+
+RF06 - Sistema de Login e Permissões:
+Dono (Admin): Acesso total. Vê custo, lucro e botão de "Cadastrar Produto".
+Funcionário (User): Acesso restrito. Vê apenas quantidade e preço de venda. Não vê preço de custo.
+
+3. REGRAS DE NEGÓCIO (A Lógica da Empresa)
+
+Regra da Qualidade: Uma tela "Original China" e uma tela "Incell" do mesmo modelo são produtos diferentes no banco de dados (IDs diferentes).
+
+Regra do Estoque Negativo: O sistema não pode permitir dar baixa em uma peça que tem quantidade 0 (Zero).
+
+Regra da Precificação: O sistema deve aceitar centavos (ex: R$ 120,50).
+
+4. DADOS QUE VAMOS ARMAZENAR (Dicionário de Dados)
+
+Campo 		Exemplo 	Por que precisamos disso?
+
+ID 		104		Identificador único (para o computador não confundir).
+Marca   	Samsung		Para relatórios (Qual marca vendo mais?).
+Modelo  	Galaxy A51	O principal dado de busca.
+Qualidade	OLED		Crítico Define o preço e a garantia.
+Cor		Preto		Para não vender a cor errada.
+Preço Custo	150.00		Para saber quanto investiu.
+Preço Venda	350.00		Para saber quanto cobrar.
+Quantidade	3		O saldo físico na gaveta.
