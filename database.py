@@ -70,13 +70,13 @@ def criar_tabela():
     cursor.execute("""
             INSERT OR IGNORE INTO usuarios (username, senha, cargo)
             VALUES (?, ?, ?)
-            """, ('admin', senha_admin, 'admin'))
+            """, ('Teteu', senha_admin, 'admin'))
 
     print("Criando Chefe...")
     cursor.execute("""
         INSERT OR IGNORE INTO usuarios (username, senha, cargo)
         VALUES (?, ?, ?)
-        """, ('chefe', senha_visualizacao, 'visualizador'))
+        """, ('Analista', senha_visualizacao, 'visualizador'))
     
     conexao.commit()
     conexao.close()
