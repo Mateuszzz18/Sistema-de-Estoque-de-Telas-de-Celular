@@ -1,4 +1,9 @@
 import sqlite3
+import os
+from dotenv import load_dotenv 
+
+load_dotenv()
+
 NOME_DB = 'Sistema_de_estoque.db'
 
 def conexao_db():
@@ -8,7 +13,7 @@ def criar_tabela():
     conexao = conexao_db()
     cursor = conexao.cursor()
 
-#Tabela Usuarios
+    #  Tabela Usuarios 
     print("Criando tabela de Usuarios")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
@@ -19,7 +24,7 @@ def criar_tabela():
         )
     ''')
 
-#Tabela Produtos
+    # Tabela Produtos 
     print("Criando tabela de Produtos")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS produtos (
@@ -34,7 +39,7 @@ def criar_tabela():
         )
     ''')
 
-#Tabela Servicos
+    #Tabela Servicos 
     print("Criando tabela servicos")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS servicos (
@@ -45,12 +50,37 @@ def criar_tabela():
             valor_cobrado REAL,
             data_entrada TEXT NOT NULL,
             data_saida TEXT,
-            status TEXT NOT NULL, -- (Ex: 'Na Bancada', 'Pronto', 'Entregue')
-            garantia_ate TEXT     -- Data final da garantia
+            status TEXT NOT NULL, 
+            garantia_ate TEXT     
             )
     ''')
 
-    print("Inserindo Usuários")
+    
+    senha_admin = os.getenv('SENHA_ADM')
+    senha_visualizacao = os.getenv('SENHA_VISUALIZACAO')
+
+    # Verificação de segurança
+    if not senha_admin or not senha_visualizacao:
+        print("ERRO CRÍTICO: Arquivo .env não encontrado ou senhas faltando!")
+        exit() 
+
+    print("Inserindo Usuários...")
+
+    print("Criando Admin...")
+    cursor.execute("""
+            INSERT OR IGNORE INTO usuarios (username, senha, cargo)
+            VALUES (?, ?, ?)
+            """, ('admin', senha_admin, 'admin'))
+
+    print("Criando Chefe...")
+    cursor.execute("""
+        INSERT OR IGNORE INTO usuarios (username, senha, cargo)
+        VALUES (?, ?, ?)
+        """, ('chefe', senha_visualizacao, 'visualizador'))
     
     conexao.commit()
     conexao.close()
+    print("--- Banco de dados configurado com sucesso! ---")
+
+if __name__ == "__main__":
+    criar_tabela()
