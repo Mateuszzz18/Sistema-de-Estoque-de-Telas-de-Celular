@@ -70,7 +70,7 @@ def criar_tabela():
     cursor.execute("""
             INSERT OR IGNORE INTO usuarios (username, senha, cargo)
             VALUES (?, ?, ?)
-            """, ('Teteu', senha_admin, 'admin'))
+            """, ('Admin', senha_admin, 'admin'))
 
     print("Criando Chefe...")
     cursor.execute("""
