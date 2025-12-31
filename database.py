@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import hashlib
 from dotenv import load_dotenv 
 
 load_dotenv()
@@ -18,7 +19,7 @@ def criar_tabela():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
+            usuario TEXT NOT NULL UNIQUE,
             senha TEXT NOT NULL,
             cargo TEXT NOT NULL
         )
@@ -59,24 +60,28 @@ def criar_tabela():
     senha_admin = os.getenv('SENHA_ADM')
     senha_visualizacao = os.getenv('SENHA_VISUALIZACAO')
 
+
     # Verificação de segurança
     if not senha_admin or not senha_visualizacao:
         print("ERRO CRÍTICO: Arquivo .env não encontrado ou senhas faltando!")
         exit() 
 
+    senha_admin_hash = hashlib.sha256(senha_admin.encode()).hexdigest()
+    senha_visualizacao_hash = hashlib.sha256(senha_visualizacao.encode()).hexdigest()
+
     print("Inserindo Usuários...")
 
     print("Criando Admin...")
     cursor.execute("""
-            INSERT OR IGNORE INTO usuarios (username, senha, cargo)
+            INSERT OR IGNORE INTO usuarios (usuario, senha, cargo)
             VALUES (?, ?, ?)
-            """, ('Admin', senha_admin, 'admin'))
+            """, ('Admin', senha_admin_hash, 'admin'))
 
     print("Criando Chefe...")
     cursor.execute("""
-        INSERT OR IGNORE INTO usuarios (username, senha, cargo)
+        INSERT OR IGNORE INTO usuarios (usuario, senha, cargo)
         VALUES (?, ?, ?)
-        """, ('Analista', senha_visualizacao, 'visualizador'))
+        """, ('Analista', senha_visualizacao_hash, 'visualizador'))
     
     conexao.commit()
     conexao.close()
