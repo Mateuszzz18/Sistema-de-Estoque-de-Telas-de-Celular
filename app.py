@@ -118,7 +118,7 @@ else:
 
     # ABA: Adicionar Produto
     elif menu == "Adicionar Produto":
-        if st.session_state['cargo'] == 'admin':
+        if st.session_state['cargo'] == 'Admin':
             st.header("📦 Cadastrar Nova Peça")
             
             with st.form("form_cadastro_produto", clear_on_submit=True):
