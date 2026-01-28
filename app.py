@@ -52,7 +52,7 @@ if 'logado' not in st.session_state:
 
 # Tela de Login
 if not st.session_state['logado']:
-    st.title("Acesso Restrito - SGE (Nuvem ☁️)")
+    st.title("Acesso Restrito - SGE")
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
