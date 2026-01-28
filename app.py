@@ -52,29 +52,35 @@ if 'logado' not in st.session_state:
 
 # Tela de Login
 if not st.session_state['logado']:
-    st.title("Acesso Restrito - SGE")
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        with st.form("login_form"):
-            st.write("Entre com suas credenciais:")
-            usuario_input = st.text_input("Usuário")
-            senha_input = st.text_input("Senha", type="password")
-            
-            botao_entrar = st.form_submit_button("Entrar")
-            
-            if botao_entrar:
-                cargo_encontrado = login(usuario_input, senha_input)
-                
-                if cargo_encontrado:
-                    st.session_state['logado'] = True
-                    st.session_state['usuario'] = usuario_input
-                    st.session_state['cargo'] = cargo_encontrado
-                    st.success("Login realizado! Carregando...")
-                    st.rerun() 
-                else:
-                    st.error("Usuário ou senha incorretos.")
 
+    login_placeholder = st.empty()
+
+    with login_placeholder.container():
+        st.title("Acesso Restrito - SGE (Nuvem ☁️)")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        
+        with col2:
+            with st.form("login_form"):
+                st.write("Entre com suas credenciais:")
+                usuario_input = st.text_input("Usuário")
+                senha_input = st.text_input("Senha", type="password")
+                
+                botao_entrar = st.form_submit_button("Entrar")
+                
+                if botao_entrar:
+                    cargo_encontrado = login(usuario_input, senha_input)
+                    
+                    if cargo_encontrado:
+                        st.session_state['logado'] = True
+                        st.session_state['usuario'] = usuario_input
+                        st.session_state['cargo'] = cargo_encontrado
+                    
+                        login_placeholder.empty() 
+                        
+                        st.success("Login realizado!")
+                        st.rerun() 
+                    else:
+                        st.error("Usuário ou senha incorretos.")
 # Tela do Sistema
 else:
     # Menu Lateral
