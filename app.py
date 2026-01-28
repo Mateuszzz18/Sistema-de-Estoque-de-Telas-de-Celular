@@ -133,7 +133,7 @@ else:
                 with c3:
                     qualidade = st.pills("Qualidade", ["Original Importada", "Original Retirada", "Incell", "OLED"])
                 with c4:
-                    aro = st.pills(["Com aro", "Sem aro"])
+                    aro = st.pills("Aro",["Com aro", "Sem aro"])
 
                 st.write("### Valores e Estoque")
                 c5, c6, c7 = st.columns(3)
