@@ -133,7 +133,7 @@ else:
                 with c3:
                     qualidade = st.pills("Qualidade", ["Original Importada", "Original Retirada", "Incell", "OLED"])
                 with c4:
-                    cor = st.text_input("Cor (opcional)")
+                    aro = st.pills(["Com aro", "Sem aro"])
 
                 st.write("### Valores e Estoque")
                 c5, c6, c7 = st.columns(3)
@@ -149,7 +149,7 @@ else:
                         "marca": marca,
                         "modelo": modelo,
                         "qualidade": qualidade,
-                        "cor": cor,
+                        "aro": aro,
                         "preco_custo": preco_custo,
                         "preco_venda": preco_venda,
                         "quantidade": quantidade
