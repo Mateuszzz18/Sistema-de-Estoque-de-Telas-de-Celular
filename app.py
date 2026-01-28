@@ -1,38 +1,58 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
 import hashlib
+from supabase import create_client
 
+# Configuração da Página
 st.set_page_config(page_title="Sistema de Controle de Estoque", layout="wide")
 
-def login (usuario, senha):
-    conn = sqlite3.connect('Sistema_de_estoque.db')
-    cursor = conn.cursor()
+# Conexão com o Supabase
+@st.cache_resource
+def init_connection():
+    try:
+        url = st.secrets["supabase"]["url"]
+        key = st.secrets["supabase"]["key"]
+        return create_client(url, key)
+    except Exception as e:
+        st.error(f"Erro ao conectar no Supabase: {e}")
+        st.stop()
 
+supabase = init_connection()
+
+# Funções
+
+def login(usuario, senha):
     senha_hash = hashlib.sha256(senha.encode()).hexdigest()
-
-    cursor.execute("SELECT cargo FROM usuarios WHERE usuario = ? AND senha = ?", (usuario, senha_hash))
-    resultado = cursor.fetchone()
-    conn.close()
-
-    if resultado:   
-        return resultado[0]
-    return None
+    try:
+        response = supabase.table('usuarios').select('cargo, senha').eq('usuario', usuario).execute()
+        if len(response.data) > 0:
+            usuario_encontrado = response.data[0]
+            if usuario_encontrado['senha'] == senha_hash:
+                return usuario_encontrado['cargo']
+        
+        return None
+    except Exception as e:
+        st.error(f"Erro no login: {e}")
+        return None
 
 def carregar_dados():
-    conn = sqlite3.connect('Sistema_de_estoque.db')
-    df = pd.read_sql_query("SELECT * FROM produtos", conn)
-    conn.close()
-    return df
+    try:
+        response = supabase.table('produtos').select('*').execute()
+        df = pd.DataFrame(response.data)
+        return df
+    except Exception as e:
+        st.error(f"Erro ao carregar estoque: {e}")
+        return pd.DataFrame()
 
+# Função Login
 if 'logado' not in st.session_state:
     st.session_state['logado'] = False
     st.session_state['usuario'] = None
     st.session_state['cargo'] = None
 
+# Tela de Login
 if not st.session_state['logado']:
-    
-    st.title("Acesso Restrito - SGE")
+    st.title("Acesso Restrito - SGE (Nuvem ☁️)")
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
@@ -55,37 +75,43 @@ if not st.session_state['logado']:
                 else:
                     st.error("Usuário ou senha incorretos.")
 
+# Tela do Sistema
 else:
-    # === TELA DO SISTEMA (SÓ APARECE SE ESTIVER LOGADO) ===
-    
     # Menu Lateral
     st.sidebar.title(f"Olá, {st.session_state['usuario']}")
     st.sidebar.caption(f"Cargo: {st.session_state['cargo']}")
     
-    menu = st.sidebar.selectbox("Navegação", ["Estoque", "Adicionar Produto", "Serviços"])
+    menu = st.sidebar.radio("Navegação", ["Serviços", "Estoque", "Adicionar Produto"])
     
-    # Botão de Sair (Logout)
+    # Botão de Sair 
     if st.sidebar.button("Sair"):
         st.session_state['logado'] = False
         st.rerun()
 
     st.title("📱 Sistema de Gestão de Estoque")
 
-    # --- ABA: ESTOQUE ---
-    if menu == "Estoque":
+   
+    # ABA: Serviços
+    if menu == "Serviços":
+        st.header("🛠️ Ordem de Serviço")
+        st.write("Em breve...")
+
+    # ABA: Estoque
+    elif menu == "Estoque":
         st.header("📦 Estoque Atual")
+
         df_produtos = carregar_dados()
         
         if df_produtos.empty:
             st.warning("Nenhum produto cadastrado ainda.")
         else:
             st.dataframe(df_produtos, use_container_width=True)
-            total_pecas = df_produtos['quantidade'].sum()
-            st.info(f"Total de peças no sistema: {total_pecas}")
+            if 'quantidade' in df_produtos.columns:
+                total_pecas = df_produtos['quantidade'].sum()
+                st.info(f"Total de peças no sistema: {total_pecas}")
 
-    # --- ABA: ADICIONAR PRODUTO ---
+    # ABA: Adicionar Produto
     elif menu == "Adicionar Produto":
-        # Verificação de Cargo: Só ADMIN pode ver essa tela
         if st.session_state['cargo'] == 'admin':
             st.header("📦 Cadastrar Nova Peça")
             
@@ -93,15 +119,15 @@ else:
                 st.write("### Dados do Produto")
                 c1, c2 = st.columns(2)
                 with c1:
-                    marca = st.selectbox("Marca", ["Samsung", "Apple", "Motorola", "Xiaomi", "LG"])
+                    marca = st.pills("Marca", ["Samsung", "Apple", "Motorola", "Xiaomi", "LG"])
                 with c2:
                     modelo = st.text_input("Modelo (Ex: A51, iPhone 11)")
 
                 c3, c4 = st.columns(2)
                 with c3:
-                    qualidade = st.selectbox("Qualidade", ["Original Importada", "Original Retirada", "Incell", "OLED"])
+                    qualidade = st.pills("Qualidade", ["Original Importada", "Original Retirada", "Incell", "OLED"])
                 with c4:
-                    cor = st.text_input("Cor")
+                    cor = st.text_input("Cor (opcional)")
 
                 st.write("### Valores e Estoque")
                 c5, c6, c7 = st.columns(3)
@@ -113,14 +139,21 @@ else:
                     quantidade = st.number_input("Qtd", min_value=1, step=1)
 
                 if st.form_submit_button("💾 Salvar no Estoque"):
-                     st.success("Simulação: Produto Salvo!")
-                     # Aqui entra o INSERT no banco depois
+                    novo_produto = {
+                        "marca": marca,
+                        "modelo": modelo,
+                        "qualidade": qualidade,
+                        "cor": cor,
+                        "preco_custo": preco_custo,
+                        "preco_venda": preco_venda,
+                        "quantidade": quantidade
+                    }
+                    
+                    try:
+                        supabase.table("produtos").insert(novo_produto).execute()
+                        st.success("Produto cadastrado na nuvem com sucesso!")
+                    except Exception as e:
+                        st.error(f"Erro ao salvar: {e}")
         
         else:
-            # Se for o CHEFE (Visualizador) tentando entrar aqui:
             st.error("🚫 Acesso Negado: Apenas administradores podem cadastrar produtos.")
-
-    # --- ABA: SERVIÇOS ---
-    elif menu == "Serviços":
-        st.header("🛠️ Ordem de Serviço")
-        st.write("Em breve...")

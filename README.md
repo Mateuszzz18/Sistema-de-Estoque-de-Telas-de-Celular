@@ -43,10 +43,3 @@ As principais tabelas modeladas são:
 2.  **`produtos`**: Inventário físico.
 3.  **`servicos`**: Ordens de serviço e histórico.
 
----
-
-## 💻 Como Rodar o Projeto
-
-### Pré-requisitos
-- Python 3 instalado.
-- Git instalado.
