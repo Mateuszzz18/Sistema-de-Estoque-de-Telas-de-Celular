@@ -73,7 +73,7 @@ else:
     st.sidebar.title(f"Olá, {st.session_state['usuario']}")
     st.sidebar.caption(f"Cargo: {st.session_state['cargo']}")
     
-    menu = st.sidebar.radio("Navegação", ["Dashboard", "Estoque", "Editar Produto"])
+    menu = st.sidebar.radio("Navegação", ["Dashboard", "Estoque"])
     
     if st.sidebar.button("Sair"):
         st.session_state['logado'] = False
@@ -128,6 +128,88 @@ else:
                     "quantidade": st.column_config.NumberColumn("Qtd", format="%d")
                 }
             )
+
+            if st.session_state['cargo'] == 'Admin': 
+                with st.expander("✏️ Editar Produto", expanded=False):
+                    
+                    if df_show.empty:
+                        st.warning("Não há produtos listados para editar.")
+                    else:
+                    
+                        df_show['label_edicao'] = df_show['id'].astype(str) + " - " + df_show['categoria'] + ": " + df_show['modelo']
+                        escolha_edicao = st.selectbox("Selecione o produto para alterar:", df_show['label_edicao'].unique())
+                        
+                        id_editar = int(escolha_edicao.split(" - ")[0])
+                        
+                        item_atual = df_produtos[df_produtos['id'] == id_editar].iloc[0]
+
+                        st.divider()
+
+                        with st.form("form_editar_produto"):
+                            st.write(f"Editando ID: **{id_editar}** ({item_atual['categoria']})")
+                            
+                            c1, c2 = st.columns(2)
+                            with c1:
+                                lista_marcas = ["Samsung", "Apple", "Motorola", "Xiaomi", "LG", "Outros"]
+                                try: idx_marca = lista_marcas.index(item_atual['marca'])
+                                except: idx_marca = 0
+                                
+                                nova_marca = st.selectbox("Marca", lista_marcas, index=idx_marca)
+                                
+                            with c2:
+                                novo_modelo = st.text_input("Modelo", value=item_atual['modelo'])
+
+                            c3, c4 = st.columns(2)
+
+                            with c3:
+                                if item_atual['categoria'] == "Bateria":
+                                    lista_qual = ["Original", "Primeira Linha (Gold)", "Paralela"]
+                                elif item_atual['categoria'] == "Tela":
+                                    lista_qual = ["Original Importada", "Original Retirada", "Incell", "OLED"]
+                                else:
+                                    lista_qual = ["Original", "Paralela"]
+
+                                try: idx_qual = lista_qual.index(item_atual['qualidade'])
+                                except: idx_qual = 0
+                                
+                                nova_qualidade = st.selectbox("Qualidade", lista_qual, index=idx_qual)
+
+                            with c4:
+                                if item_atual['categoria'] == "Tela":
+                                    lista_aro = ["Com aro", "Sem aro"]
+                                    try: idx_aro = lista_aro.index(item_atual['aro'])
+                                    except: idx_aro = 0
+                                    novo_aro = st.selectbox("Aro", lista_aro, index=idx_aro)
+                                else:
+                                    novo_aro = "N/A"
+                                    st.info("Este item não permite edição de Aro.")
+
+                            st.write("**Atualizar Financeiro**")
+                            c5, c6, c7 = st.columns(3)
+                            with c5:
+                                novo_custo = st.number_input("Custo", value=float(item_atual['preco_custo']), step=0.50)
+                            with c6:
+                                novo_venda = st.number_input("Venda", value=float(item_atual['preco_venda']), step=0.50)
+                            with c7:
+                                nova_qtd = st.number_input("Qtd", value=int(item_atual['quantidade']), step=1)
+
+                            if st.form_submit_button("🔄 Salvar Alterações"):
+                                dados_update = {
+                                    "marca": nova_marca,
+                                    "modelo": novo_modelo,
+                                    "qualidade": nova_qualidade,
+                                    "aro": novo_aro,
+                                    "preco_custo": novo_custo,
+                                    "preco_venda": novo_venda,
+                                    "quantidade": nova_qtd
+                                }
+                                
+                                try:
+                                    supabase.table("produtos").update(dados_update).eq("id", id_editar).execute()
+                                    st.success(f"Produto {id_editar} atualizado com sucesso!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro ao atualizar: {e}")
 
         st.divider()
 
