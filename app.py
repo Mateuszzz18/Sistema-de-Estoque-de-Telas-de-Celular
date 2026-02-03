@@ -129,13 +129,13 @@ else:
 
                     if categoria_selecionada == "Tela":
                         with c3:
-                            qualidade = st.selectbox("Qualidade *", ["Original Nacional/China", "Retirada", "Incell", "OLED"])
+                            qualidade = st.pills("Qualidade *", ["Original Nacional/China", "Retirada", "Incell", "OLED"])
                         with c4:
                             aro = st.pills("Aro *", ["Com aro", "Sem aro"], selection_mode="single")
                     
                     elif categoria_selecionada == "Bateria":
                         with c3:
-                            qualidade = st.selectbox("Qualidade *", ["Original", "Primeira Linha", "Paralela"])
+                            qualidade = st.pills("Qualidade *", ["Original", "Primeira Linha", "Paralela"])
                         
                         # Bateria não tem aro, definimos valor automático
                         aro = "N/A"
@@ -145,7 +145,7 @@ else:
                     else:
                         # Para Dock, Tampa e Outros
                         with c3:
-                            qualidade = st.selectbox("Qualidade *", ["Original", "Paralela"])
+                            qualidade = st.pills("Qualidade *", ["Original", "Paralela"])
                         aro = "N/A"
                         with c4:
                             st.info(f"🛠️ Item do tipo {categoria_selecionada}.")
