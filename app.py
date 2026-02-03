@@ -103,6 +103,7 @@ else:
         if st.session_state['cargo'] == 'Admin': 
             with st.expander("➕ Cadastrar Novo Produto", expanded=False):
                 
+                # 1. CATEGORIA (FORA DO FORMULÁRIO para atualizar a tela)
                 st.write("**O que vamos cadastrar?**")
                 categoria_selecionada = st.pills(
                     "Selecione o tipo:", 
@@ -110,6 +111,8 @@ else:
                     selection_mode="single",
                     default="Tela"
                 )
+
+                # 2. O FORMULÁRIO
                 with st.form("form_cadastro_dinamico", clear_on_submit=True):
                     st.write(f"Cadastrando: **{categoria_selecionada}**")
                     
@@ -117,19 +120,37 @@ else:
                     with c1: 
                         marca = st.pills("Marca *", ["Samsung", "Apple", "Motorola", "Xiaomi", "LG", "Outros"], selection_mode="single")
                     with c2: 
-                        modelo = st.text_input("Modelo *", placeholder="Ex: iPhone 11, G8 Play")
+                        modelo = st.text_input("Modelo do Aparelho *", placeholder="Ex:")
 
                     c3, c4 = st.columns(2)
-                    with c3: 
-                        qualidade = st.pills("Qualidade *", ["Original Importada", "Original Retirada", "Incell", "OLED"], selection_mode="single")
-                    
-                    with c4:
-                        if categoria_selecionada == "Tela":
-                            aro = st.pills("Aro *", ["Com aro", "Sem aro"], selection_mode="single")
-                        else:
-                            st.info("Este item não possui aro. (Automático)")
-                            aro = "N/A" 
+                
+                    qualidade = None
+                    aro = None
 
+                    if categoria_selecionada == "Tela":
+                        with c3:
+                            qualidade = st.selectbox("Qualidade *", ["Original Nacional/China", "Retirada", "Incell", "OLED"])
+                        with c4:
+                            aro = st.pills("Aro *", ["Com aro", "Sem aro"], selection_mode="single")
+                    
+                    elif categoria_selecionada == "Bateria":
+                        with c3:
+                            qualidade = st.selectbox("Qualidade *", ["Original", "Primeira Linha", "Paralela"])
+                        
+                        # Bateria não tem aro, definimos valor automático
+                        aro = "N/A"
+                        with c4:
+                            st.info("🔋 Baterias não possuem aro. (Automático)")
+                    
+                    else:
+                        # Para Dock, Tampa e Outros
+                        with c3:
+                            qualidade = st.selectbox("Qualidade *", ["Original", "Paralela"])
+                        aro = "N/A"
+                        with c4:
+                            st.info(f"🛠️ Item do tipo {categoria_selecionada}.")
+
+      
                     st.write("**Financeiro**")
                     c5, c6, c7 = st.columns(3)
                     with c5:
@@ -139,18 +160,20 @@ else:
                     with c7:
                         qtd = st.number_input("Qtd *", min_value=1, step=1, value=1)
 
+           
                     if st.form_submit_button("💾 Salvar Produto"):
                         erros = []
                         if not marca: erros.append("Marca")
                         if not modelo: erros.append("Modelo")
                         if not qualidade: erros.append("Qualidade")
+                        
                         if not aro: erros.append("Aro")
                         
                         if len(erros) > 0:
                             st.error(f"❌ Preencha: {', '.join(erros)}")
                         else:
                             novo_prod = {
-                                "categoria": categoria_selecionada, # <--- Nova Coluna
+                                "categoria": categoria_selecionada, 
                                 "marca": marca, "modelo": modelo, "aro": aro,
                                 "qualidade": qualidade, "quantidade": qtd,
                                 "preco_custo": custo, "preco_venda": venda
@@ -175,7 +198,6 @@ else:
                 with col_f1:
                     busca = st.text_input("Buscar Modelo")
                 with col_f2:
-                    # Filtro adaptado para mostrar categorias também se quiser
                     filtro_aro = st.selectbox("Detalhe", ["Todos", "Com aro", "Sem aro", "N/A"])
 
             df_show = df_produtos.copy()
@@ -183,7 +205,6 @@ else:
             if filtro_aro != "Todos": df_show = df_show[df_show['aro'] == filtro_aro]
 
             st.dataframe(
-                # Adicionei a coluna 'categoria' na visualização se vc já tiver criado no banco
                 df_show[['marca', 'modelo', 'qualidade', 'aro', 'preco_venda', 'quantidade']], 
                 use_container_width=True,
                 hide_index=True,
