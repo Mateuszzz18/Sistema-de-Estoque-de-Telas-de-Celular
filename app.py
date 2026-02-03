@@ -3,10 +3,8 @@ import pandas as pd
 import hashlib
 from supabase import create_client
 
-# Configuração da Página
 st.set_page_config(page_title="Sistema de Controle de Estoque", layout="wide")
 
-# Conexão com o Supabase
 @st.cache_resource
 def init_connection():
     try:
@@ -19,7 +17,6 @@ def init_connection():
 
 supabase = init_connection()
 
-# Funções
 
 def login(usuario, senha):
     senha_hash = hashlib.sha256(senha.encode()).hexdigest()
@@ -29,7 +26,6 @@ def login(usuario, senha):
             usuario_encontrado = response.data[0]
             if usuario_encontrado['senha'] == senha_hash:
                 return usuario_encontrado['cargo']
-        
         return None
     except Exception as e:
         st.error(f"Erro no login: {e}")
@@ -37,129 +33,150 @@ def login(usuario, senha):
 
 def carregar_dados():
     try:
-        response = supabase.table('produtos').select('*').execute()
+        response = supabase.table('produtos').select('*').order('id').execute()
         df = pd.DataFrame(response.data)
         return df
     except Exception as e:
         st.error(f"Erro ao carregar estoque: {e}")
         return pd.DataFrame()
 
-# Função Login
 if 'logado' not in st.session_state:
     st.session_state['logado'] = False
     st.session_state['usuario'] = None
     st.session_state['cargo'] = None
 
-# Tela de Login
 if not st.session_state['logado']:
-
     login_placeholder = st.empty()
-
     with login_placeholder.container():
         st.title("Acesso Restrito - SGE (Nuvem ☁️)")
         col1, col2, col3 = st.columns([1, 2, 1])
-        
         with col2:
             with st.form("login_form"):
                 st.write("Entre com suas credenciais:")
                 usuario_input = st.text_input("Usuário")
                 senha_input = st.text_input("Senha", type="password")
                 
-                botao_entrar = st.form_submit_button("Entrar")
-                
-                if botao_entrar:
+                if st.form_submit_button("Entrar"):
                     cargo_encontrado = login(usuario_input, senha_input)
-                    
                     if cargo_encontrado:
                         st.session_state['logado'] = True
                         st.session_state['usuario'] = usuario_input
                         st.session_state['cargo'] = cargo_encontrado
-                    
                         login_placeholder.empty() 
-                        
                         st.success("Login realizado!")
                         st.rerun() 
                     else:
                         st.error("Usuário ou senha incorretos.")
-# Tela do Sistema
+
+
 else:
-    # Menu Lateral
     st.sidebar.title(f"Olá, {st.session_state['usuario']}")
     st.sidebar.caption(f"Cargo: {st.session_state['cargo']}")
     
-    menu = st.sidebar.radio("Navegação", ["Serviços", "Estoque", "Adicionar Produto"])
+    menu = st.sidebar.radio("Navegação", ["Dashboard", "Estoque", "Editar Produto"])
     
-    # Botão de Sair 
     if st.sidebar.button("Sair"):
         st.session_state['logado'] = False
         st.rerun()
 
     st.title("📱 Sistema de Gestão de Estoque")
 
-   
-    # ABA: Serviços
-    if menu == "Serviços":
-        st.header("🛠️ Ordem de Serviço")
-        st.write("Em breve...")
+    if menu == "Dashboard":
+        st.header("📊 Painel Gerencial")
+        df = carregar_dados()
+        if not df.empty:
+            # Cálculos simples
+            total_itens = df['quantidade'].sum()
+            valor_estoque = (df['quantidade'] * df['preco_venda']).sum()
+            
+            c1, c2 = st.columns(2)
+            c1.metric("📦 Total de Peças", total_itens)
+            c2.metric("💰 Valor em Estoque", f"R$ {valor_estoque:,.2f}")
+            
+            st.bar_chart(df['marca'].value_counts())
+        else:
+            st.info("Sem dados para dashboard.")
 
-    # ABA: Estoque
     elif menu == "Estoque":
-        st.header("📦 Estoque Atual")
+        st.header("📦 Gerenciamento de Estoque")
+
+        if st.session_state['cargo'] == 'Admin': 
+            with st.expander("➕ Cadastrar Novo Produto", expanded=False):
+                with st.form("form_cadastro_rapido", clear_on_submit=True):
+                    st.write("**Dados Principais**")
+                    c1, c2, c3 = st.columns(3)
+                    with c1: 
+                        marca = st.pills("Marca *", ["Samsung", "Apple", "Motorola", "Xiaomi", "LG", "Outros"], selection_mode="single")
+                    with c2: 
+                        modelo = st.text_input("Modelo *", placeholder="Ex: iPhone 11")
+                    with c3:
+                        aro = st.pills("Aro *", ["Com aro", "Sem aro"], selection_mode="single")
+
+                    c4, c5 = st.columns(2)
+                    with c4:
+                        qualidade = st.pills("Qualidade *", ["Original Importada", "Original Retirada", "Incell", "OLED"], selection_mode="single")
+                    with c5:
+                        qtd = st.number_input("Quantidade *", min_value=1, step=1, value=1)
+
+                    st.write("**Financeiro**")
+                    c6, c7 = st.columns(2)
+                    with c6:
+                        custo = st.number_input("Custo Unitário (R$)", min_value=0.0, step=0.50)
+                    with c7:
+                        venda = st.number_input("Venda Unitário (R$)", min_value=0.0, step=0.50)
+
+                    if st.form_submit_button("💾 Salvar Produto"):
+                        erros = []
+                        if not marca: erros.append("Marca")
+                        if not modelo: erros.append("Modelo")
+                        if not aro: erros.append("Aro")
+                        if not qualidade: erros.append("Qualidade")
+                        
+                        if len(erros) > 0:
+                            st.error(f"❌ Preencha os campos obrigatórios: {', '.join(erros)}")
+                        else:
+                            novo_prod = {
+                                "marca": marca, "modelo": modelo, "aro": aro,
+                                "qualidade": qualidade, "quantidade": qtd,
+                                "preco_custo": custo, "preco_venda": venda
+                            }
+                            try:
+                                supabase.table("produtos").insert(novo_prod).execute()
+                                st.success(f"✅ {modelo} cadastrado!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Erro: {e}")
+
+        st.divider()
 
         df_produtos = carregar_dados()
         
         if df_produtos.empty:
-            st.warning("Nenhum produto cadastrado ainda.")
+            st.info("Nenhum produto cadastrado.")
         else:
-            st.dataframe(df_produtos, use_container_width=True)
-            if 'quantidade' in df_produtos.columns:
-                total_pecas = df_produtos['quantidade'].sum()
-                st.info(f"Total de peças no sistema: {total_pecas}")
+            with st.expander("🔍 Filtros", expanded=True):
+                col_f1, col_f2 = st.columns([3, 1])
+                with col_f1:
+                    busca = st.text_input("Buscar Modelo")
+                with col_f2:
+                    filtro_aro = st.selectbox("Aro", ["Todos", "Com aro", "Sem aro"])
 
-    # ABA: Adicionar Produto
-    elif menu == "Adicionar Produto":
-        if st.session_state['cargo'] == 'Admin':
-            st.header("📦 Cadastrar Nova Peça")
-            
-            with st.form("form_cadastro_produto", clear_on_submit=True):
-                st.write("### Dados do Produto")
-                c1, c2 = st.columns(2)
-                with c1:
-                    marca = st.pills("Marca", ["Samsung", "Apple", "Motorola", "Xiaomi", "LG"])
-                with c2:
-                    modelo = st.text_input("Modelo (Ex: A51, iPhone 11)")
+            df_show = df_produtos.copy()
+            if busca: df_show = df_show[df_show['modelo'].str.contains(busca, case=False)]
+            if filtro_aro != "Todos": df_show = df_show[df_show['aro'] == filtro_aro]
 
-                c3, c4 = st.columns(2)
-                with c3:
-                    qualidade = st.pills("Qualidade", ["Original Importada", "Original Retirada", "Incell", "OLED"])
-                with c4:
-                    aro = st.pills("Aro",["Com aro", "Sem aro"])
+            st.dataframe(
+                df_show[['marca', 'modelo', 'qualidade', 'aro', 'preco_venda', 'quantidade']],
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "preco_venda": st.column_config.NumberColumn("Valor", format="R$ %.2f"),
+                    "modelo": "Modelo",
+                    "aro": "Detalhe",
+                    "quantidade": st.column_config.NumberColumn("Qtd", format="%d")
+                }
+            )
 
-                st.write("### Valores e Estoque")
-                c5, c6, c7 = st.columns(3)
-                with c5:
-                    preco_custo = st.number_input("Custo (R$)", step=0.50)
-                with c6:
-                    preco_venda = st.number_input("Venda (R$)", step=0.50)
-                with c7:
-                    quantidade = st.number_input("Qtd", min_value=1, step=1)
-
-                if st.form_submit_button("💾 Salvar no Estoque"):
-                    novo_produto = {
-                        "marca": marca,
-                        "modelo": modelo,
-                        "qualidade": qualidade,
-                        "aro": aro,
-                        "preco_custo": preco_custo,
-                        "preco_venda": preco_venda,
-                        "quantidade": quantidade
-                    }
-                    
-                    try:
-                        supabase.table("produtos").insert(novo_produto).execute()
-                        st.success("Produto cadastrado na nuvem com sucesso!")
-                    except Exception as e:
-                        st.error(f"Erro ao salvar: {e}")
-        
-        else:
-            st.error("🚫 Acesso Negado: Apenas administradores podem cadastrar produtos.")
+    elif menu == "Editar Produto":
+        st.header("✏️ Editar")
+        st.info("Selecione um produto na aba Estoque para ver o ID e use esta tela futuramente.")
