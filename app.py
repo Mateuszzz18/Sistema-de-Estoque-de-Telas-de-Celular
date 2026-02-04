@@ -100,23 +100,31 @@ else:
     elif menu == "Estoque":
         st.header("📦 Gerenciamento de Estoque")
 
-        # TABELA DE VISUALIZAÇÃO
         df_produtos = carregar_dados()
         
         if df_produtos.empty:
             st.info("Nenhum produto cadastrado.")
         else:
-            with st.expander("🔍 Filtros", expanded=True):
-                col_f1, col_f2 = st.columns([3, 1])
-                with col_f1:
-                    busca = st.text_input("Buscar Modelo")
-                with col_f2:
-                    filtro_aro = st.selectbox("Detalhe", ["Todos", "Com aro", "Sem aro", "N/A"])
-
+            
+            df_produtos = carregar_dados()
+        
+        if df_produtos.empty:
+            st.info("Nenhum produto cadastrado.")
+        else:
+            col_f1, col_f2 = st.columns([3, 1])
+            with col_f1:
+                busca = st.text_input("🔎 Buscar Modelo", placeholder="Digite para pesquisar...")
+            with col_f2:
+                filtro_aro = st.selectbox("Filtrar Detalhe", ["Todos", "Com aro", "Sem aro", "N/A"])
+    
             df_show = df_produtos.copy()
-            if busca: df_show = df_show[df_show['modelo'].str.contains(busca, case=False)]
-            if filtro_aro != "Todos": df_show = df_show[df_show['aro'] == filtro_aro]
+            if busca: 
+                df_show = df_show[df_show['modelo'].str.contains(busca, case=False)]
+            if filtro_aro != "Todos": 
+                df_show = df_show[df_show['aro'] == filtro_aro]
 
+            st.write(f"**Resultados:** {len(df_show)} itens encontrados.")
+            
             st.dataframe(
                 df_show[['categoria', 'marca', 'modelo', 'qualidade', 'aro', 'preco_venda', 'quantidade']], 
                 use_container_width=True,

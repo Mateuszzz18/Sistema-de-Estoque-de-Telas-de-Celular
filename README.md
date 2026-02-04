@@ -8,7 +8,7 @@
 ## 📖 Sobre o Projeto
 O **SGE (Sistema de Gestão de Estoque)** é uma solução desenvolvida para substituir o controle manual (caderno) em assistências técnicas de smartphones. 
 
-O foco principal é o controle preciso de **Frontais (Telas)**, diferenciando qualidades (OLED, Incell, Original) e gerenciando o fluxo de Ordem de Serviço (O.S.).
+O foco principal é o controle preciso de **Frontais (Telas), Baterias, Conectores e outros**, diferenciando qualidades e gerenciando o fluxo de Ordem de Serviço (O.S.).
 
 Este projeto está sendo construído com foco em **Engenharia de Dados**, utilizando modelagem relacional e boas práticas de desenvolvimento (Git Flow, Clean Code).
 
@@ -37,7 +37,7 @@ Este projeto está sendo construído com foco em **Engenharia de Dados**, utiliz
 ---
 
 ## 🗂️ Estrutura do Banco de Dados
-O sistema utiliza **SQLite** pela leveza e portabilidade.
+O sistema utiliza **SUPABASE** pela leveza e portabilidade.
 As principais tabelas modeladas são:
 1.  **`usuarios`**: Controle de acesso e cargos.
 2.  **`produtos`**: Inventário físico.
