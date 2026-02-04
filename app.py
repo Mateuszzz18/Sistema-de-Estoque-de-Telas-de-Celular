@@ -105,17 +105,10 @@ else:
         if df_produtos.empty:
             st.info("Nenhum produto cadastrado.")
         else:
-            
-            df_produtos = carregar_dados()
-        
-        if df_produtos.empty:
-            st.info("Nenhum produto cadastrado.")
-        else:
-            col_f1 = st.columns([3])
-            with col_f1:
-                busca = st.text_input("🔎 Buscar Modelo", placeholder="Digite para pesquisar...")
+            busca = st.text_input("🔎 Buscar Modelo", placeholder="Digite o modelo para pesquisar...")
     
             df_show = df_produtos.copy()
+            
             if busca: 
                 df_show = df_show[df_show['modelo'].str.contains(busca, case=False)]
 
