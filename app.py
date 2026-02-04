@@ -111,17 +111,13 @@ else:
         if df_produtos.empty:
             st.info("Nenhum produto cadastrado.")
         else:
-            col_f1, col_f2 = st.columns([3, 1])
+            col_f1 = st.columns([3, 1])
             with col_f1:
                 busca = st.text_input("🔎 Buscar Modelo", placeholder="Digite para pesquisar...")
-            with col_f2:
-                filtro_aro = st.selectbox("Filtrar Detalhe", ["Todos", "Com aro", "Sem aro", "N/A"])
     
             df_show = df_produtos.copy()
             if busca: 
                 df_show = df_show[df_show['modelo'].str.contains(busca, case=False)]
-            if filtro_aro != "Todos": 
-                df_show = df_show[df_show['aro'] == filtro_aro]
 
             st.write(f"**Resultados:** {len(df_show)} itens encontrados.")
             
