@@ -111,7 +111,7 @@ else:
         if df_produtos.empty:
             st.info("Nenhum produto cadastrado.")
         else:
-            col_f1 = st.columns([3, 1])
+            col_f1 = st.columns([3])
             with col_f1:
                 busca = st.text_input("🔎 Buscar Modelo", placeholder="Digite para pesquisar...")
     
