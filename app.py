@@ -115,14 +115,14 @@ else:
             st.write(f"**Resultados:** {len(df_show)} itens encontrados.")
             
             st.dataframe(
-                df_show[['categoria', 'marca', 'modelo', 'qualidade', 'aro', 'preco_venda', 'quantidade']], 
+                df_show[['modelo', 'aro', 'preco_venda', 'quantidade']], 
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "preco_venda": st.column_config.NumberColumn("Valor", format="R$ %.2f"),
-                    "modelo": "Modelo",
-                    "aro": "Detalhe",
-                    "quantidade": st.column_config.NumberColumn("Qtd", format="%d")
+                    "modelo": st.column_config.TextColumn("Modelo / Peça", width="medium"),
+                    "aro": st.column_config.TextColumn("Detalhe", width="small"),
+                    "preco_venda": st.column_config.NumberColumn("Valor", format="R$ %.2f", width="small"),
+                    "quantidade": st.column_config.NumberColumn("Estoque", format="%d", width="small")
                 }
             )
 
