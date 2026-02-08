@@ -127,7 +127,7 @@ else:
                 for index, row in df_view.iterrows():
                     icone = "🔴" if row['status'] == "Aberto" else "🟡" if row['status'] == "Em Andamento" else "🟢"
                     
-                    with st.expander(f"{icone} #{row['id']} - {row['aparelho_modelo']} ({row['cliente_nome']})"):
+                    with st.expander(f"{icone} {row['id']} - {row['aparelho_modelo']} ({row['cliente_nome']})"):
                         st.write(f"**Defeito:** {row['defeito_relatado']}")
                         st.caption(f"Entrada: {str(row['data_entrada'])[:10]}")
                         
@@ -141,23 +141,36 @@ else:
 
             if os_atual:
                 st.subheader(f"✏️ Editando OS #{os_atual['id']}")
-                st.info(f"Cliente: **{os_atual['cliente_nome']}**")
-
-                st.write("**Segurança do Aparelho**")
-                tipo_senha_edit = st.pills("Tipo de Bloqueio", ["Padrão (Desenho)", "PIN / Senha"], selection_mode="single", default="Padrão (Desenho)")
                 
+                # 1. ESCOLHA FORA DO FORM
+                tipo_senha_edit = st.pills(
+                    "Alterar Tipo de Bloqueio:", 
+                    ["Padrão (Desenho)", "PIN / Senha"], 
+                    selection_mode="single", 
+                    default="Padrão (Desenho)"
+                )
+                
+                # 2. O FORMULÁRIO DE EDIÇÃO
                 with st.form("form_editar_os"):
-                    st.write(f"**Aparelho:** {os_atual['aparelho_modelo']}")
+                    st.write("**Dados do Cliente (Editáveis)**")
+                    c_cli1, c_cli2 = st.columns(2)
+                    with c_cli1:
+                        novo_nome = st.text_input("Nome", value=os_atual['cliente_nome'])
+                    with c_cli2:
+                        novo_contato = st.text_input("Contato", value=os_atual.get('cliente_contato', ''))
+
+                    st.write("**Dados do Aparelho**")
+                    novo_modelo = st.text_input("Modelo", value=os_atual['aparelho_modelo'])
+                    novo_defeito = st.text_area("Defeito Relatado", value=os_atual['defeito_relatado'])
+
+                    # Lógica da Senha (Mantida)
+                    nova_senha = os_atual.get('aparelho_senha', '') 
                     
-                    nova_senha = ""
                     if tipo_senha_edit == "Padrão (Desenho)":
-                        c_s1, c_s2 = st.columns([3, 1])
-                        with c_s1:
-                            nova_senha = st.text_input("Sequência (1-9)", value=os_atual.get('aparelho_senha', ''), help="Digite a ordem das bolinhas")
-                        with c_s2:
-                            st.write("")
-                            st.write("")
-                            with st.popover("🔢 Ver Mapa"):
+                         c_s1, c_s2 = st.columns([3, 1])
+                         with c_s1:
+                             nova_senha = st.text_input("Senha", placeholder="Ex: 1-4-7-8")
+                         with st.popover("🔢 Ver Mapa"):
                                     st.markdown("""
                                     **Imagine as bolinhas numeradas:**
                                     
@@ -172,9 +185,9 @@ else:
                                     * **L:** 1-4-7-8
                                     * **Z:** 1-2-3-5-7-8-9
                                     * **Quadrado:** 1-2-5-4
-                                    """)
-                    else:
-                        nova_senha = st.text_input("Senha / PIN", value=os_atual.get('aparelho_senha', ''))
+                                    """) 
+                    else: 
+                         nova_senha = st.text_input("Nova Senha / PIN")
 
                     st.divider()
                     
@@ -186,22 +199,50 @@ else:
                     servico = st.text_area("Serviço Realizado", value=os_atual.get('servico_feito', '') or "")
                     valor = st.number_input("Valor Total (R$)", value=float(os_atual.get('valor_total', 0.0) or 0.0), step=10.0)
 
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        if st.form_submit_button("💾 Salvar"):
+                    c_save, c_close = st.columns(2)
+                    
+                    with c_save:
+                        if st.form_submit_button("💾 Salvar Alterações", use_container_width=True):
                             supabase.table("servicos").update({
+                                "cliente_nome": novo_nome,
+                                "cliente_contato": novo_contato,
+                                "aparelho_modelo": novo_modelo,
+                                "defeito_relatado": novo_defeito,
                                 "aparelho_senha": nova_senha,
                                 "status": novo_status,
                                 "servico_feito": servico,
                                 "valor_total": valor
                             }).eq("id", os_atual['id']).execute()
+                            
                             st.success("OS Atualizada!")
                             del st.session_state['os_selecionada']
                             st.rerun()
-                    with c2:
-                        if st.form_submit_button("❌ Fechar"):
+                    
+                    with c_close:
+                        if st.form_submit_button("❌ Fechar", use_container_width=True):
                             del st.session_state['os_selecionada']
                             st.rerun()
+
+                    st.divider() 
+                    
+                    c_check, c_del = st.columns([3, 2]) 
+                    with c_check:
+                        st.write("") 
+                        confirmar = st.checkbox("Confirmar exclusão", key="check_del")
+                        
+                    with c_del:
+                        if st.form_submit_button("🗑️ Excluir", use_container_width=True):
+                            if confirmar:
+                                try:
+                                    supabase.table("servicos").delete().eq("id", os_atual['id']).execute()
+                                    st.success("OS apagada.")
+                                    del st.session_state['os_selecionada']
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Erro: {e}")
+                            else:
+                                st.warning("Marque a caixa ao lado!")
+                                        
             else:
                 with st.expander("➕ Nova Ordem de Serviço", expanded=False):
                     
@@ -216,7 +257,7 @@ else:
                     with st.form("form_nova_os", clear_on_submit=True):
                         st.write("**Dados do Cliente**")
                         nome = st.text_input("Nome *")
-                        contato = st.text_input("Contato/Zap")
+                        contato = st.text_input("Contato")
                         
                         st.write("**Dados do Aparelho**")
                         modelo = st.text_input("Modelo *", placeholder="Ex: iPhone 11")
@@ -225,7 +266,7 @@ else:
                         if tipo_senha == "Padrão (Desenho)":
                             c_pass1, c_pass2 = st.columns([3, 1])
                             with c_pass1:
-                                senha = st.text_input("Sequência (Gabarito)", placeholder="Ex: 1-4-7-8 (L)")
+                                senha = st.text_input("Senha", placeholder="Ex: 1-4-7-8 (L)")
                             with c_pass2:
                                 st.write("") 
                                 st.write("")
