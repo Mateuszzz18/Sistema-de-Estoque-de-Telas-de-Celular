@@ -129,6 +129,7 @@ else:
                     
                     with st.expander(f"{icone} {row['id']} - {row['aparelho_modelo']} ({row['cliente_nome']})"):
                         st.write(f"**Defeito:** {row['defeito_relatado']}")
+                        st.write(f"**Senha:** {row['aparelho_senha']}")
                         st.caption(f"Entrada: {str(row['data_entrada'])[:10]}")
                         
                         if st.button("🛠️ Gerenciar", key=f"btn_os_{row['id']}"):
@@ -169,7 +170,7 @@ else:
                     if tipo_senha_edit == "Padrão (Desenho)":
                          c_s1, c_s2 = st.columns([3, 1])
                          with c_s1:
-                             nova_senha = st.text_input("Senha", placeholder="Ex: 1-4-7-8")
+                             nova_senha = st.text_input("Senha", value=os_atual.get('aparelho_senha', ''))
                          with st.popover("🔢 Ver Mapa"):
                                     st.markdown("""
                                     **Imagine as bolinhas numeradas:**
